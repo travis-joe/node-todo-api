@@ -4,12 +4,12 @@
  */
 const express = require('express');
 const bodyParse = require('body-parser');
-
+const { ObjectID } =require('mongodb');
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./models/todo')
 const {User} = require('./models/user')
 
-
+const port = process.env.PORT || 3000;
 // const newTodo = new Todo({
 // 	text: 'feed cat',
 // 	completed:false,
@@ -57,8 +57,43 @@ app.get('/todos',(req,res) => {
 	})
 })
 
-app.listen(3000, () => {
-	console.log('started on port 3000')
+app.get('/todos/:id',(req,res) => {
+	const id = req.params.id;
+
+  if(!ObjectID.isValid(id)) {
+  	return res.status(404).send('invalid');
+  }
+
+  Todo.findById(id).then((todo) => {
+		if(!todo){
+			return res.status(404).send();
+		}
+
+		res.send({todo});
+  }).catch((e) => {
+  	res.status(404).send(e);
+  })
+})
+
+app.delete('/todos/:id',(req,res) => {
+	const id = req.params.id;
+
+	if(!ObjectID.isValid(id)){
+		return res.status(404).send('invalid id');
+	}
+
+	Todo.findByIdAndRemove(id).then((todo) => {
+		if(!todo){
+			return res.status(404).send('not found')
+		}
+		res.send(todo)
+	}).catch( (e) => {
+		res.status(400).send()
+	})
+})
+
+app.listen(port, () => {
+	console.log(`started on port ${port}`)
 })
 
 module.exports = {app}
